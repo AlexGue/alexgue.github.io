@@ -5,7 +5,7 @@ let showVal3;
 let connection;
 window.onload = async function () {
 
-    connection = new WebSocket('wss://bpmn.alexgd.es');
+    connection = new WebSocket('wss://bpmnserver.alexgd.es');
 
 
 
