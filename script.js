@@ -1,6 +1,7 @@
 
 
 let connection;
+let adminMode = false;
 window.onload = async function () {
 
     connection = new WebSocket('wss://bpmnserver.alexgd.es');
@@ -28,6 +29,8 @@ window.onload = async function () {
 
     let lastColored;
     let lastColored2;
+    let previousTimeouts = [];
+
 
     connection.onmessage = function (message) {
 
@@ -41,16 +44,24 @@ window.onload = async function () {
 
         var newObject = JSON.parse(message.data)
         if (newObject.type === 'move') {
+         
+            if (!adminMode){
+                document.getElementById('title').hidden = false;
+            }
+            
             let viewBox = document.querySelector("#mainSvg").viewBox.baseVal
             let change = Math.abs(viewBox.x - newObject.x) + Math.abs(viewBox.y - newObject.y) + Math.abs(viewBox.height - newObject.zoom);
             if (change > 30){
-                let tickMs = 10;
+                let tickMs = 15;
                 let duration = 500;
                 let ticks = duration/tickMs;
                 let current = 0;
                 let difX = newObject.x - viewBox.x;
                 let difY = newObject.y - viewBox.y;
                 let difZoom = newObject.zoom - viewBox.height;
+                previousTimeouts.forEach(x=>clearInterval(x))
+                previousTimeouts = []
+              
                 while (current < duration){
                     current += tickMs;
                     actual = (current/duration);
@@ -62,7 +73,8 @@ window.onload = async function () {
                         x: newX,
                         zoom: newZoom
                     }
-                    setTimeout(moveTo, current, obj)
+                   
+                    previousTimeouts.push(setTimeout(moveTo, current, obj))
                 }
             }
             else{
