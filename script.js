@@ -46,7 +46,7 @@ window.onload = async function () {
         if (newObject.type === 'move') {
          
             if (!adminMode){
-                document.getElementById('title').hidden = false;
+                document.getElementById('title').hidden = true;
             }
             
             let viewBox = document.querySelector("#mainSvg").viewBox.baseVal
