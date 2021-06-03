@@ -1,10 +1,11 @@
-
+let showVal;
+let showVal2;
+let showVal3;
 
 let connection;
-let adminMode = false;
 window.onload = async function () {
 
-    connection = new WebSocket('wss://bpmnserver.alexgd.es');
+    connection = new WebSocket('ws://127.0.0.1:1337');
 
 
 
@@ -28,72 +29,21 @@ window.onload = async function () {
     };
 
     let lastColored;
-    let lastColored2;
-    let previousTimeouts = [];
-
 
     connection.onmessage = function (message) {
 
-        function moveTo(obj){
-            let viewBox = document.querySelector("#mainSvg").viewBox.baseVal
-            viewBox.x =obj.x
-            viewBox.y = obj.y
-            viewBox.height = obj.zoom
-            viewBox.width = obj.zoom * 2
-        }
-
         var newObject = JSON.parse(message.data)
+        console.log(newObject)
         if (newObject.type === 'move') {
-         
-            if (!adminMode){
-                document.getElementById('title').hidden = true;
-            }
-            
-            let viewBox = document.querySelector("#mainSvg").viewBox.baseVal
-            let change = Math.abs(viewBox.x - newObject.x) + Math.abs(viewBox.y - newObject.y) + Math.abs(viewBox.height - newObject.zoom);
-            if (change > 30){
-                let tickMs = 15;
-                let duration = 500;
-                let ticks = duration/tickMs;
-                let current = 0;
-                let difX = newObject.x - viewBox.x;
-                let difY = newObject.y - viewBox.y;
-                let difZoom = newObject.zoom - viewBox.height;
-                previousTimeouts.forEach(x=>clearInterval(x))
-                previousTimeouts = []
-              
-                while (current < duration){
-                    current += tickMs;
-                    actual = (current/duration);
-                    let newX = viewBox.x + (difX*actual)
-                    let newY = viewBox.y + (difY*actual)
-                    let newZoom = viewBox.height + difZoom*actual
-                    let obj = {
-                        y: newY,
-                        x: newX,
-                        zoom: newZoom
-                    }
-                   
-                    previousTimeouts.push(setTimeout(moveTo, current, obj))
-                }
-            }
-            else{
-                viewBox.x = newObject.x
-                viewBox.y = newObject.y
-                viewBox.height = newObject.zoom
-                viewBox.width = newObject.zoom * 2
-            }
-          
+            document.querySelector("#mainSvg").viewBox.baseVal.x = newObject.x
+            document.querySelector("#mainSvg").viewBox.baseVal.y = newObject.y
+            document.querySelector("#mainSvg").viewBox.baseVal.height = newObject.zoom
+            document.querySelector("#mainSvg").viewBox.baseVal.width = newObject.zoom * 2
         } else if (newObject.type === 'color') {
-            if (lastColored2){
-                document.getElementById(lastColored2).style.fill = 'white'
-            }
             if (lastColored){
-                document.getElementById(lastColored).style.fill = 'rgb(33 150 243 / 30%)'
-                lastColored2 = lastColored;
+                document.getElementById(lastColored).style.fill = 'white'
             }
             document.getElementById(newObject.id).style.fill = '#2196f385'
-            lastColored2 = lastColored;
             lastColored = newObject.id;
 
         } else  if (newObject.type === 'info') {
@@ -108,15 +58,32 @@ window.onload = async function () {
                 + 'connection or the server is down.'
         }));
     };
-  
+    let currentObject = {
+        type: 'move',
+        x: 1187,
+        y: 66,
+        zoom: 851,
+    }
 
     setTimeout(function () {
         document.querySelector("#mainSvg").viewBox.baseVal.x = 1187
         document.querySelector("#mainSvg").viewBox.baseVal.y = 66
         document.querySelector("#mainSvg").viewBox.baseVal.height = 851
         document.querySelector("#mainSvg").viewBox.baseVal.width = 851 * 2
-    }, 350)
+    }, 100)
+    showVal = function showVal(val) {
+        currentObject.x = val
+        connection.send(JSON.stringify(currentObject))
+    }
+    showVal2 = function showVal(val) {
+        currentObject.y = val
+        connection.send(JSON.stringify(currentObject))
+    }
+    showVal3 = function showVal(val) {
+        currentObject.zoom = val
+        connection.send(JSON.stringify(currentObject))
 
+    }
 
     let response = await fetch('https://assets.galibo.governify.io/api/v1/public/static/DiagramaFinal2.svg')
     let rtext = await response.text()
